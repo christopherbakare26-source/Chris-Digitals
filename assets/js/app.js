@@ -168,6 +168,15 @@ var SITE_CONFIG = window.CD_CONFIG || {
 
   var REQUIRED = ["fullName", "email", "service", "budget", "description", "consent"];
 
+  /* A Web3Forms access key is a UUID. Anything empty, whitespace, or still
+     the placeholder text from SETUP-GUIDE.md means "not configured yet". */
+  function hasRealAccessKey() {
+    var key = String(SITE_CONFIG.FORM_ACCESS_KEY || "").trim();
+    if (!key) return false;
+    if (/paste|your-key|here|xxxx/i.test(key)) return false;
+    return key.length >= 20;
+  }
+
   function setStatus(kind, html) {
     if (!statusEl) return;
     statusEl.className = "form-status is-visible form-status--" + kind;
@@ -391,7 +400,10 @@ var SITE_CONFIG = window.CD_CONFIG || {
     }
 
     // Not configured yet: say so honestly instead of faking a send.
-    if (!SITE_CONFIG.FORM_ENDPOINT || !SITE_CONFIG.FORM_ACCESS_KEY) {
+    // A key that is empty, whitespace, or still the guide's placeholder text
+    // counts as "not configured" — otherwise the form would POST a bogus key
+    // and show a confusing provider error instead of this clear notice.
+    if (!SITE_CONFIG.FORM_ENDPOINT || !hasRealAccessKey()) {
       setStatus(
         "err",
         "<strong>The form is not connected yet.</strong><br>" +
@@ -434,7 +446,11 @@ var SITE_CONFIG = window.CD_CONFIG || {
     })
       .then(function (res) {
         return res.json().catch(function () { return {}; }).then(function (body) {
-          if (!res.ok || body.success === false) {
+          // Web3Forms answers {"success": true, ...} on delivery. Anything
+          // else — a non-2xx status, success:false, or a body we could not
+          // parse — is treated as a failure so we never claim a send that
+          // did not happen.
+          if (!res.ok || body.success !== true) {
             throw new Error(body.message || ("Request failed with status " + res.status));
           }
           return body;
