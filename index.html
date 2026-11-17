@@ -29,6 +29,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/styles.css">
+<link rel="stylesheet" href="assets/css/motion.css">
 
 <script type="application/ld+json">
 {
@@ -110,6 +111,7 @@
   <!-- ============ HERO ============ -->
   <section class="hero">
     <div class="hero__bg" aria-hidden="true"></div>
+    <canvas class="hero__particles" aria-hidden="true"></canvas>
     <div class="container">
       <div class="hero__grid">
         <div class="hero__content">
@@ -188,16 +190,30 @@
   <div class="toolstrip">
     <div class="container toolstrip__inner">
       <span class="toolstrip__label">Working with</span>
-      <ul class="toolstrip__list">
-        <li>WordPress</li>
-        <li>Divi 5</li>
-        <li>Elementor Pro</li>
-        <li>Kadence</li>
-        <li>WPBakery</li>
-        <li>Gutenberg</li>
-        <li>WooCommerce</li>
-        <li>ACF</li>
-      </ul>
+      <div class="toolstrip__marquee">
+        <div class="toolstrip__track">
+          <ul class="toolstrip__list">
+            <li>WordPress</li>
+            <li>Divi 5</li>
+            <li>Elementor Pro</li>
+            <li>Kadence</li>
+            <li>WPBakery</li>
+            <li>Gutenberg</li>
+            <li>WooCommerce</li>
+            <li>ACF</li>
+          </ul>
+          <ul class="toolstrip__list" aria-hidden="true">
+            <li>WordPress</li>
+            <li>Divi 5</li>
+            <li>Elementor Pro</li>
+            <li>Kadence</li>
+            <li>WPBakery</li>
+            <li>Gutenberg</li>
+            <li>WooCommerce</li>
+            <li>ACF</li>
+          </ul>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -541,6 +557,7 @@
   <span class="wa-float__label">WhatsApp</span>
 </a>
 
+<script src="assets/js/motion.js" defer></script>
 <script src="assets/js/app.js" defer></script>
 </body>
 </html>

@@ -1,0 +1,129 @@
+/* ==========================================================================
+   Chris Digitals — motion layer
+   --------------------------------------------------------------------------
+   Additive animation only. Nothing here changes layout, colour, type or
+   content. Every effect is transform/opacity based and is switched off for
+   prefers-reduced-motion and for touch / coarse-pointer devices.
+   ========================================================================== */
+
+/* ---------- 1. Hero glowing particles ---------- */
+.hero__particles,
+.page-hero__particles {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 1.4s var(--ease);
+}
+.hero__particles.is-ready,
+.page-hero__particles.is-ready { opacity: 1; }
+
+/* Keep hero copy above the particle canvas */
+.hero .container,
+.page-hero .container { position: relative; z-index: 1; }
+
+/* ---------- 2. Custom cursor (desktop, fine pointer only) ---------- */
+.cursor-dot,
+.cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  border-radius: 50%;
+  z-index: 9999;
+  opacity: 0;
+  will-change: transform;
+  transition: opacity 0.3s var(--ease),
+              width 0.28s var(--ease),
+              height 0.28s var(--ease),
+              margin 0.28s var(--ease),
+              border-color 0.28s var(--ease),
+              background-color 0.28s var(--ease);
+}
+
+.cursor-dot {
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  background: #c4b5fd;
+  box-shadow: 0 0 10px 2px rgba(124, 92, 255, 0.85),
+              0 0 24px 7px rgba(124, 92, 255, 0.32);
+}
+
+.cursor-ring {
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  border: 1px solid rgba(167, 139, 250, 0.5);
+  box-shadow: 0 0 18px rgba(124, 92, 255, 0.26),
+              inset 0 0 12px rgba(124, 92, 255, 0.1);
+}
+
+html.has-cursor .cursor-dot,
+html.has-cursor .cursor-ring { opacity: 1; }
+
+/* Expanded state over interactive elements */
+html.has-cursor.is-hovering .cursor-ring {
+  width: 58px;
+  height: 58px;
+  margin: -29px 0 0 -29px;
+  border-color: rgba(167, 139, 250, 0.9);
+  background: rgba(124, 92, 255, 0.1);
+}
+html.has-cursor.is-hovering .cursor-dot {
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+}
+
+/* Hide while the pointer leaves the window */
+html.has-cursor.is-pointer-out .cursor-dot,
+html.has-cursor.is-pointer-out .cursor-ring { opacity: 0; }
+
+/* Hide the native arrow only once the custom cursor is actually running.
+   Text fields keep their I-beam so typing still feels normal. */
+html.has-cursor,
+html.has-cursor a,
+html.has-cursor button,
+html.has-cursor .btn,
+html.has-cursor .card,
+html.has-cursor .project,
+html.has-cursor .wa-float,
+html.has-cursor .toolstrip__list li { cursor: none; }
+
+html.has-cursor input,
+html.has-cursor textarea,
+html.has-cursor select { cursor: auto; }
+
+/* ---------- 3. Reduced motion: switch the whole layer off ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .hero__particles,
+  .page-hero__particles { display: none !important; }
+
+  .cursor-dot,
+  .cursor-ring { display: none !important; }
+
+  /* Marquee becomes a static, fully readable row */
+  .toolstrip__track {
+    animation: none !important;
+    transform: none !important;
+    width: auto;
+  }
+  .toolstrip__marquee {
+    overflow-x: auto;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .toolstrip__list { flex-wrap: wrap; }
+  .toolstrip__list[aria-hidden="true"] { display: none; }
+}
+
+/* ---------- 4. Coarse pointer / small screens: no cursor layer ---------- */
+@media (pointer: coarse) {
+  .cursor-dot,
+  .cursor-ring { display: none !important; }
+}

@@ -669,8 +669,6 @@ button { font: inherit; color: inherit; }
   display: flex;
   align-items: center;
   gap: 2.5rem;
-  flex-wrap: wrap;
-  justify-content: center;
 }
 .toolstrip__label {
   font-size: 0.68rem;
@@ -679,13 +677,29 @@ button { font: inherit; color: inherit; }
   color: var(--muted);
   font-weight: 700;
   white-space: nowrap;
+  flex-shrink: 0;
 }
+
+/* Marquee: two identical lists scroll as one continuous loop. */
+.toolstrip__marquee {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
+}
+.toolstrip__track {
+  display: flex;
+  width: max-content;
+  animation: toolstrip-scroll 32s linear infinite;
+}
+.toolstrip__marquee:hover .toolstrip__track { animation-play-state: paused; }
 .toolstrip__list {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.6rem 1.9rem;
   align-items: center;
-  justify-content: center;
+  padding-right: 1.9rem;
 }
 .toolstrip__list li {
   font-size: 0.9rem;
@@ -693,8 +707,14 @@ button { font: inherit; color: inherit; }
   letter-spacing: -0.01em;
   color: rgba(255, 255, 255, 0.55);
   transition: color 0.25s var(--ease);
+  white-space: nowrap;
 }
 .toolstrip__list li:hover { color: #fff; }
+
+@keyframes toolstrip-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
 
 /* ---------- 8. Cards / grids ---------- */
 .grid { display: grid; gap: 1.15rem; }
