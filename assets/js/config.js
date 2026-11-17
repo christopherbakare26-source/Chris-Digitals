@@ -12,13 +12,12 @@
 
 window.CD_CONFIG = {
   /* ---- Project enquiry form (Web3Forms) -------------------------------
-     FORM_ENDPOINT is fixed. FORM_ACCESS_KEY is the one value you must add:
-     go to https://web3forms.com, enter christopherbakare014@gmail.com,
-     and paste the access key you receive by email into the quotes below.
-     Until it is filled in, the form shows a clear "not configured" notice
-     instead of pretending to send.                                        */
+     FORM_ENDPOINT is fixed. FORM_ACCESS_KEY is the access key issued by
+     Web3Forms for christopherbakare014@gmail.com (confirmed working).
+     If the key is ever emptied or replaced with placeholder text, the form
+     shows a clear "not configured" notice instead of pretending to send.  */
   FORM_ENDPOINT: "https://api.web3forms.com/submit",
-  FORM_ACCESS_KEY: "",
+  FORM_ACCESS_KEY: "b2773830-b41f-492d-a7a4-f559c697ba49",
 
   /* Where project enquiries are delivered (also used in error messages). */
   OWNER_EMAIL: "christopherbakare014@gmail.com",
