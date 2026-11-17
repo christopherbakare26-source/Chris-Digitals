@@ -1593,7 +1593,7 @@ button { font: inherit; color: inherit; }
 /* ---------- 22. Floating WhatsApp button ---------- */
 .wa-float {
   position: fixed;
-  right: clamp(0.9rem, 3vw, 1.6rem);
+  left: clamp(0.9rem, 3vw, 1.6rem);
   bottom: clamp(0.9rem, 3vw, 1.6rem);
   z-index: 90;
   display: inline-flex;
