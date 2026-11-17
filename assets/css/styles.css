@@ -1534,6 +1534,27 @@ button { font: inherit; color: inherit; }
 .booking-slot__text { font-size: 0.82rem; color: var(--muted); line-height: 1.6; }
 .booking-slot iframe { width: 100%; border: 0; border-radius: 12px; min-height: 620px; }
 
+/* Calendly inline embed — matches the card radius and dark surface. */
+.booking-slot__embed { margin-top: 1rem; }
+.booking-slot__embed:empty { display: none; }
+.booking-slot__embed .calendly-inline-widget {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #05060b;
+}
+
+/* Honeypot field: off-screen, never focusable, invisible to people. */
+.hp-field {
+  position: absolute !important;
+  left: -9999px !important;
+  top: auto !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 /* ---------- 19. Reveal animation ---------- */
 .reveal {
   opacity: 0;

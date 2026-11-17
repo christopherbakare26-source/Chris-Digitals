@@ -62,7 +62,7 @@
       <a class="nav__link" href="contact.html" aria-current="page">Contact</a>
     </nav>
     <div class="header__actions">
-      <a class="btn btn--primary btn--sm" href="#enquiry-form">Book a Free Call</a>
+      <a class="btn btn--primary btn--sm" href="https://calendly.com/christopherbakare26/30min" data-calendly target="_blank" rel="noopener noreferrer">Book a Free Call</a>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mobile-nav" aria-label="Open menu">
         <span></span><span></span><span></span>
       </button>
@@ -76,7 +76,7 @@
   <a href="services.html">Services</a>
   <a href="work.html">Work</a>
   <a href="contact.html" aria-current="page">Contact</a>
-  <a class="btn btn--primary btn--block" href="#enquiry-form">Book a Free Discovery Call</a>
+  <a class="btn btn--primary btn--block" href="https://calendly.com/christopherbakare26/30min" data-calendly target="_blank" rel="noopener noreferrer">Book a Free Discovery Call</a>
 </nav>
 
 <main id="main">
@@ -103,7 +103,7 @@
         <!-- ============ FORM ============ -->
         <div class="form-card reveal">
           <h2 class="section__title" style="font-size:clamp(1.4rem,2.6vw,1.85rem);margin-bottom:0.6rem">
-            Request a discovery call
+            Option A — Send a project enquiry
           </h2>
           <p style="color:var(--muted);font-size:0.92rem;margin-bottom:1.8rem">
             Fields marked <span style="color:var(--violet-2)">*</span> are required.
@@ -111,6 +111,11 @@
           </p>
 
           <form id="enquiry-form" novalidate>
+            <!-- Honeypot: hidden from people, filled in by bots. -->
+            <div class="hp-field" aria-hidden="true">
+              <label for="company_website">Company website</label>
+              <input type="text" id="company_website" name="company_website" tabindex="-1" autocomplete="off">
+            </div>
             <div class="form-grid">
 
               <div class="field">
@@ -281,13 +286,20 @@
           </div>
 
           <!-- ============ BOOKING INTEGRATION SLOT ============ -->
-          <div class="booking-slot" data-booking-embed>
-            <h2 class="booking-slot__title">Prefer to pick a slot yourself?</h2>
+          <div class="booking-slot">
+            <h2 class="booking-slot__title">Option B — pick a slot yourself</h2>
             <p class="booking-slot__text">
-              A live calendar can be embedded here so visitors choose an open slot
-              directly. Until a booking service is connected, the form on the left
-              collects your preferred date and time and Christopher confirms by email.
+              Ready to talk? Choose an open time on the live calendar below and the
+              booking is confirmed instantly, with a Google Meet link sent to you.
             </p>
+            <a class="btn btn--primary btn--block" href="https://calendly.com/christopherbakare26/30min"
+               data-calendly target="_blank" rel="noopener noreferrer" style="margin-top:0.9rem">
+              Book a Free Discovery Call
+              <svg class="arrow" width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+            <div class="booking-slot__embed" data-booking-embed></div>
           </div>
 
           <div class="card" style="padding:1.3rem">
@@ -364,6 +376,7 @@
   <span class="wa-float__label">WhatsApp</span>
 </a>
 
+<script src="assets/js/config.js" defer></script>
 <script src="assets/js/motion.js" defer></script>
 <script src="assets/js/app.js" defer></script>
 </body>

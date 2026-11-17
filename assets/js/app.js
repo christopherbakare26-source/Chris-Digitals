@@ -11,14 +11,12 @@
    See SETUP-GUIDE.md for step-by-step instructions.
    ========================================================================== */
 
-var SITE_CONFIG = {
-  // e.g. "https://formspree.io/f/xxxxxxxx"  — leave "" to use the email fallback
+var SITE_CONFIG = window.CD_CONFIG || {
   FORM_ENDPOINT: "",
-  // Where enquiries are delivered
+  FORM_ACCESS_KEY: "",
   OWNER_EMAIL: "christopherbakare014@gmail.com",
-  // Optional: Cal.com / Calendly booking page. When set, the booking panel
-  // on contact.html embeds it automatically.
-  BOOKING_URL: ""
+  CALENDLY_URL: "",
+  CALENDLY_BRAND: ""
 };
 
 (function () {
@@ -103,17 +101,61 @@ var SITE_CONFIG = {
     el.textContent = new Date().getFullYear();
   });
 
-  /* ---------- Booking embed ---------- */
+  /* ---------- Calendly: popup + inline embed ---------- */
+  var CALENDLY = SITE_CONFIG.CALENDLY_URL || "";
+  var CALENDLY_FULL = CALENDLY
+    ? CALENDLY + (CALENDLY.indexOf("?") > -1 ? "&" : "?") + (SITE_CONFIG.CALENDLY_BRAND || "")
+    : "";
+
+  // Load Calendly's official widget script once, only when needed.
+  var calendlyLoading = false;
+  function loadCalendly(cb) {
+    if (window.Calendly) { cb(); return; }
+    if (calendlyLoading) {
+      document.addEventListener("calendly:ready", cb, { once: true });
+      return;
+    }
+    calendlyLoading = true;
+    document.addEventListener("calendly:ready", cb, { once: true });
+    var s = document.createElement("script");
+    s.src = "https://assets.calendly.com/assets/external/widget.js";
+    s.async = true;
+    s.onload = function () { document.dispatchEvent(new Event("calendly:ready")); };
+    s.onerror = function () { document.dispatchEvent(new Event("calendly:ready")); };
+    document.head.appendChild(s);
+  }
+
+  // Any element with [data-calendly] opens the booking popup.
+  // Delegated, so links injected later (e.g. in the form success message) work too.
+  document.addEventListener("click", function (e) {
+    var trigger = e.target.closest ? e.target.closest("[data-calendly]") : null;
+    if (!trigger) return;
+    if (!CALENDLY_FULL) return; // no booking URL configured: let the link behave normally
+    e.preventDefault();
+    loadCalendly(function () {
+      if (window.Calendly && window.Calendly.initPopupWidget) {
+        window.Calendly.initPopupWidget({ url: CALENDLY_FULL });
+      } else {
+        window.open(CALENDLY_FULL, "_blank", "noopener");
+      }
+    });
+  });
+
+  // Inline embed in the contact sidebar.
   var bookingMount = document.querySelector("[data-booking-embed]");
-  if (bookingMount && SITE_CONFIG.BOOKING_URL) {
-    var iframe = document.createElement("iframe");
-    iframe.src = SITE_CONFIG.BOOKING_URL;
-    iframe.title = "Book a free discovery call with Christopher Bakare";
-    iframe.loading = "lazy";
+  if (bookingMount && CALENDLY_FULL) {
+    var inline = document.createElement("div");
+    inline.className = "calendly-inline-widget";
+    inline.setAttribute("data-url", CALENDLY_FULL);
+    inline.style.minWidth = "280px";
+    inline.style.height = "660px";
     bookingMount.innerHTML = "";
-    bookingMount.appendChild(iframe);
-    var note = bookingMount.querySelector(".booking-slot__text");
-    if (note) note.remove();
+    bookingMount.appendChild(inline);
+    loadCalendly(function () {
+      if (window.Calendly && window.Calendly.initInlineWidget) {
+        window.Calendly.initInlineWidget({ url: CALENDLY_FULL, parentElement: inline });
+      }
+    });
   }
 
   /* ---------- Enquiry form ---------- */
@@ -270,41 +312,45 @@ var SITE_CONFIG = {
     ].join("\n");
   }
 
-  function mailtoFallback(data) {
-    var subject = "Discovery call request — " + (data.fullName || "Website enquiry");
-    var href = "mailto:" + SITE_CONFIG.OWNER_EMAIL +
-      "?subject=" + encodeURIComponent(subject) +
-      "&body=" + encodeURIComponent(buildEmailBody(data));
+  /* ---- Spam + duplicate protection ---------------------------------- */
 
-    setStatus(
-      "info",
-      "<strong>One last step — send the email.</strong><br>" +
-      "Your email app is opening with all your details already filled in. " +
-      "Press <em>Send</em> there and your request reaches Christopher directly at " +
-      "<a href=\"mailto:" + SITE_CONFIG.OWNER_EMAIL + "\" style=\"color:inherit;text-decoration:underline\">" +
-      SITE_CONFIG.OWNER_EMAIL + "</a>.<br><br>" +
-      "Nothing opened? <a href=\"" + href + "\" style=\"color:inherit;text-decoration:underline\">" +
-      "Click here to open the email</a>, or copy your details below and send them yourself." +
-      "<br><br><button type=\"button\" class=\"btn btn--ghost btn--sm\" id=\"copy-details\">Copy my details</button>"
-    );
+  // Time trap: a real person cannot fill this form in under 3 seconds.
+  var formRenderedAt = Date.now();
+  var MIN_FILL_MS = 3000;
 
-    var copyBtn = document.getElementById("copy-details");
-    if (copyBtn) {
-      copyBtn.addEventListener("click", function () {
-        var text = buildEmailBody(data);
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(function () {
-            copyBtn.textContent = "Copied ✓";
-          }).catch(function () {
-            copyBtn.textContent = "Copy failed — please select the text manually";
-          });
-        } else {
-          copyBtn.textContent = "Copy not supported in this browser";
-        }
-      });
+  // Duplicate guard: remember the last payload sent from this browser.
+  var DUP_KEY = "cd_enquiry_last";
+  var DUP_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+
+  function payloadFingerprint(data) {
+    return [data.email, data.fullName, data.service, data.description]
+      .join("|").toLowerCase().replace(/\s+/g, " ").trim();
+  }
+
+  function isDuplicate(data) {
+    try {
+      var raw = window.localStorage.getItem(DUP_KEY);
+      if (!raw) return false;
+      var prev = JSON.parse(raw);
+      if (!prev || !prev.fp || !prev.at) return false;
+      if (Date.now() - prev.at > DUP_WINDOW_MS) return false;
+      return prev.fp === payloadFingerprint(data);
+    } catch (err) {
+      return false; // storage blocked (private mode): never block a real enquiry
     }
+  }
 
-    window.location.href = href;
+  function rememberSubmission(data) {
+    try {
+      window.localStorage.setItem(DUP_KEY, JSON.stringify({
+        fp: payloadFingerprint(data),
+        at: Date.now()
+      }));
+    } catch (err) { /* ignore */ }
+  }
+
+  function clearSubmissionMemory() {
+    try { window.localStorage.removeItem(DUP_KEY); } catch (err) { /* ignore */ }
   }
 
   form.addEventListener("submit", function (e) {
@@ -316,10 +362,43 @@ var SITE_CONFIG = {
       return;
     }
 
+    // Honeypot: a hidden field only a bot would fill in.
+    var honey = form.elements["company_website"];
+    if (honey && String(honey.value || "").trim()) {
+      setStatus("ok", "<strong>Thank you — your request has been received.</strong>");
+      return;
+    }
+
+    // Time trap.
+    if (Date.now() - formRenderedAt < MIN_FILL_MS) {
+      setStatus("err", "That was a little too quick — please take a moment and submit again.");
+      return;
+    }
+
     var data = collect();
 
-    if (!SITE_CONFIG.FORM_ENDPOINT) {
-      mailtoFallback(data);
+    // Duplicate guard.
+    if (isDuplicate(data)) {
+      setStatus(
+        "info",
+        "<strong>This enquiry has already been sent.</strong><br>" +
+        "We received your details a few minutes ago and Christopher will reply to " +
+        "<strong>" + data.email + "</strong> within one business day. " +
+        "If you need to add something, email <a href=\"mailto:" + SITE_CONFIG.OWNER_EMAIL +
+        "\" style=\"color:inherit;text-decoration:underline\">" + SITE_CONFIG.OWNER_EMAIL + "</a>."
+      );
+      return;
+    }
+
+    // Not configured yet: say so honestly instead of faking a send.
+    if (!SITE_CONFIG.FORM_ENDPOINT || !SITE_CONFIG.FORM_ACCESS_KEY) {
+      setStatus(
+        "err",
+        "<strong>The form is not connected yet.</strong><br>" +
+        "Please email <a href=\"mailto:" + SITE_CONFIG.OWNER_EMAIL +
+        "\" style=\"color:inherit;text-decoration:underline\">" + SITE_CONFIG.OWNER_EMAIL +
+        "</a> directly and Christopher will reply within one business day."
+      );
       return;
     }
 
@@ -328,30 +407,58 @@ var SITE_CONFIG = {
       submitBtn.innerHTML = "Sending…";
     }
 
+    // Web3Forms expects a flat JSON body with the access key included.
+    var payload = {
+      access_key: SITE_CONFIG.FORM_ACCESS_KEY,
+      subject: "New project enquiry — " + (data.fullName || "Website visitor"),
+      from_name: "Chris Digitals website",
+      replyto: data.email,
+      fullName: data.fullName,
+      email: data.email,
+      phone: data.phone || "Not provided",
+      company: data.company || "Not provided",
+      service: data.service,
+      budget: data.budget,
+      meetingDate: prettyDate(data.meetingDate),
+      meetingTime: data.meetingTime,
+      description: data.description,
+      consent: data.consent,
+      submittedAt: data.submittedAt,
+      page: data.page
+    };
+
     fetch(SITE_CONFIG.FORM_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(data)
+      body: JSON.stringify(payload)
     })
       .then(function (res) {
-        if (!res.ok) throw new Error("Request failed with status " + res.status);
-        return res;
+        return res.json().catch(function () { return {}; }).then(function (body) {
+          if (!res.ok || body.success === false) {
+            throw new Error(body.message || ("Request failed with status " + res.status));
+          }
+          return body;
+        });
       })
       .then(function () {
+        rememberSubmission(data);
         form.reset();
+        formRenderedAt = Date.now();
         setStatus(
           "ok",
-          "<strong>Thank you — your request has been sent.</strong><br>" +
-          "Christopher will reply to <strong>" + data.email + "</strong> within one business day " +
-          "to confirm your discovery call. A confirmation has also been sent to your inbox."
+          "<strong>Thank you — your enquiry has been sent.</strong><br>" +
+          "Christopher will reply to <strong>" + data.email + "</strong> within one business day. " +
+          "If you'd like to pick a time right now, " +
+          "<a href=\"#\" data-calendly style=\"color:inherit;text-decoration:underline\">book a discovery call</a>."
         );
-        statusEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (statusEl) statusEl.scrollIntoView({ behavior: "smooth", block: "center" });
       })
-      .catch(function () {
+      .catch(function (err) {
         setStatus(
           "err",
           "<strong>Something went wrong sending the form.</strong><br>" +
-          "Please try again, or email <a href=\"mailto:" + SITE_CONFIG.OWNER_EMAIL +
+          (err && err.message ? "(" + err.message + ") " : "") +
+          "Please try again in a moment, or email <a href=\"mailto:" + SITE_CONFIG.OWNER_EMAIL +
           "\" style=\"color:inherit;text-decoration:underline\">" + SITE_CONFIG.OWNER_EMAIL + "</a> directly."
         );
       })
