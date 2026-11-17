@@ -14,24 +14,35 @@ your own accounts. Everything else is already built into the site.
 
 ---
 
-## Part 3 — Connect the enquiry form (5 minutes)
+## Part 3 — The enquiry form (already connected)
 
-The form now submits directly from the page. It needs one free service to
-deliver the email. **Web3Forms** is already wired up; you only need an access key.
+**This is done — no action needed.** The Web3Forms access key for
+`christopherbakare014@gmail.com` is already in `assets/js/config.js`, and a real
+submission from the live form was confirmed to return `success: true` from
+`https://api.web3forms.com/submit`, delivering the enquiry by email.
 
-### Steps
+The form submits directly from the page, shows a success message on confirmed
+delivery, and shows an error message (with your email as a fallback) on failure.
+
+### If you ever need to replace the key
+
+The only reason to touch this is if you reissue the key in the Web3Forms
+dashboard, or move the form to a different inbox:
 
 1. Go to **https://web3forms.com**
 2. Enter **`christopherbakare014@gmail.com`** and click *Create Access Key*.
 3. Check that inbox — you'll receive an **Access Key** (a long string of letters
    and numbers).
-4. Open **`assets/js/config.js`** and paste it between the quotes:
+4. Open **`assets/js/config.js`** and replace the current value:
 
    ```js
-   FORM_ACCESS_KEY: "paste-your-key-here",
+   FORM_ACCESS_KEY: "your-new-key-here",
    ```
 
 5. Save, re-upload the file, and submit a test enquiry.
+
+If the key is ever blanked or left as placeholder text, the form safely reverts
+to the "not configured" notice rather than pretending to send.
 
 ### Is that key safe in the frontend?
 
